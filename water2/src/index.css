@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: rgb(255, 255, 255); /* White background */
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark\:bg-gray-900 {
+    background-color: rgb(255, 255, 255) !important; /* Override dark mode background to white */
+  }
+}
+/* Add padding to the top of sections to account for the fixed Navbar height */
+section {
+  scroll-margin-top: 80px; /* Adjust this value based on your Navbar height */
+}
