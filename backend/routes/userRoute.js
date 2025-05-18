@@ -1,6 +1,7 @@
+
 import express from 'express';
 import multer from 'multer';
-import { login,getUsers,signup , updateUser, updateAddress, getUserDocument, updateUserDocuments,getCurrentUser,assignDoctor, uploadPdf} from '../controllers/userController.js';
+import { login,getUsers,signup , updateUser, updateAddress, getUserDocument,  sendOTP, verifyOTP, resendOTP,updateUserDocuments,getCurrentUser,assignDoctor, uploadPdf} from '../controllers/userController.js';
 import upload from '../middlewares/multer.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import User from '../models/userModel.js';
@@ -9,6 +10,9 @@ const userRouter = express.Router();
 
 const storage = multer.memoryStorage();
 const uploads = multer({ storage: storage });
+userRouter.post("/send-otp", sendOTP);
+userRouter.post("/verify-otp", verifyOTP);
+userRouter.post("/resend-otp", resendOTP);
 userRouter.post("/assign-doctor", verifyToken, assignDoctor);
 userRouter.get('/me', verifyToken, getCurrentUser); 
 userRouter.get('/getUsers', verifyToken, getUsers);

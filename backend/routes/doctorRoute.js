@@ -1,13 +1,22 @@
 import express from 'express';
 import multer from 'multer';
-import { signup, login, getCurrentDoctor, getAllDoctors, searchDoctor, getDoctorPatientEmails, getDoctorByEmail } from '../controllers/doctorController.js';
+import { signup, login, getCurrentDoctor, getAllDoctors, searchDoctor, getDoctorPatientEmails, getDoctorByEmail, sendOTP, verifyOTP, resendOTP } from '../controllers/doctorController.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 import doctorModel from "../models/doctorModel.js";
 import userModel from "../models/userModel.js";
 import appointmentModel from '../models/appointmentModel.js';
+
+
 const doctorRouter = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+
+
+// Move OTP routes to the top and fix their paths
+doctorRouter.post('/send-otp', sendOTP);       // Remove /api prefix
+doctorRouter.post('/verify-otp', verifyOTP);   // Remove /api prefix
+doctorRouter.post('/resend-otp', resendOTP);   // Remove /api prefix
+
 
 // Protected routes that need authentication
 doctorRouter.get('/me', verifyToken, getCurrentDoctor); // Must come before /:email
@@ -26,7 +35,7 @@ doctorRouter.get('/patients/assigned', verifyToken, async (req, res) => {
       name: patient.name,
       email: patient.email,
       medicalRecord: patient.documents?.pdf 
-        ? `data:application/pdf;base64,${patient.documents.pdf.toString('base64')}` 
+        ? `data:application/pdf,base64,${patient.documents.pdf.toString('base64')}` 
         : null
     }));
 

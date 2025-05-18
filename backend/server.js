@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -37,6 +38,8 @@ app.use('/api/appointment', appointmentRouter);
 app.use('/api/user', userRouter); 
 app.use('/api/doctor', doctorRouter);
 app.use('/api/messages', messageRouter);
+
+
 
 app.get('/', (req, res) => {
   res.send('API WORKING');

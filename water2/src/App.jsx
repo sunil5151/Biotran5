@@ -6,6 +6,7 @@ import AppContextProvider from "./context/AppContext";
 import Home from "./pages/Home";
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ChatList from "./pages/ChatList"; 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard1 from "./pages/Dashboard1";
@@ -19,6 +20,7 @@ import DoctorPatients from "./pages/DoctorPatients";
 import DoctorListPage from "./pages/DoctorListPage";
 import GetDoctor from "./pages/GetDoctor";
 import ShowData from "./pages/ShowData";
+import ChatScreen from "./pages/ChatScreen";
 import MyAppointments from "./pages/MyAppointments";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -45,6 +47,8 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/doctor-access" element={<Dashboard1 />} />
               <Route path="/doctors" element={<Doctors />} />
+              <Route path="/chats" element={<ChatList />} />
+                <Route path="/chat/:receiverEmail" element={<ChatScreen />} />
               <Route path="/doctors/:speciality" element={<Doctors />} />
               <Route path="/login" element={<Login />} />
               <Route path="/doctor-list" element={<DoctorListPage />} />

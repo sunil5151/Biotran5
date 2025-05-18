@@ -8,17 +8,78 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    speciality: ''
   });
+  
   const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState('');
+const [otpSent, setOtpSent] = useState(false);
+const [otp, setOtp] = useState('');
+const [verificationLoading, setVerificationLoading] = useState(false);
+const [resendTimer, setResendTimer] = useState(0);
+  
 
   const handleToggle = () => {
     setIsDoctor(prev => !prev);
   };
 
-  const handleSubmit = async (e) => {
+   const startResendTimer = () => {
+   setResendTimer(30); // 30 seconds cooldown
+   const timer = setInterval(() => {
+     setResendTimer((prev) => {
+       if (prev <= 1) {
+         clearInterval(timer);
+         return 0;
+       }
+       return prev - 1;
+     });
+   }, 1000);
+ };
+
+ const handleSendOTP = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+
+  
+    try {
+      // Select endpoint based on user type
+      const endpoint = isDoctor
+        ? 'http://localhost:4000/api/doctor/send-otp'  // Matches backend route
+        : 'http://localhost:4000/api/user/send-otp';
+
+      console.log('Using endpoint:', endpoint);
+      console.log('Sending data:', {
+        email: formData.email,
+        name: formData.name
+      });
+      
+      const response = await axios.post(endpoint, {
+        email: formData.email,
+        name: formData.name
+      });
+
+      console.log('Response:', response.data);
+
+      if (response.data.success) {
+        setOtpSent(true);
+        startResendTimer();
+      } else {
+        setError(response.data.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.error('OTP Send Error:', error.response || error);
+      setError(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to send OTP'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -27,36 +88,66 @@ const Signup = () => {
     submitData.append('name', formData.name);
     submitData.append('email', formData.email);
     submitData.append('password', formData.password);
+    submitData.append('otp', otp);
 
-    // Only append the image if signing up as a patient
+    // Add speciality for doctors
+    if (isDoctor) {
+      submitData.append('speciality', formData.speciality);
+    }
+
+    // Append image
     if (image) {
       submitData.append('image', image);
     }
 
-    // Choose endpoint based on toggle
-    const endpoint = isDoctor 
-      ? 'http://localhost:4000/api/doctor/signup' 
-      : 'http://localhost:4000/api/user/signup';
+  // Choose endpoint based on toggle
+  const endpoint = isDoctor 
+    ? 'http://localhost:4000/api/doctor/signup' 
+    : 'http://localhost:4000/api/user/signup';
 
-    try {
-      const response = await axios.post(endpoint, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+  try {
+    const response = await axios.post(endpoint, submitData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-      if (response.data.success) {
-        if (response.data.token) {
-          localStorage.setItem('jwtToken', response.data.token);
-        }
-        navigate('/login');
+    if (response.data.success) {
+      if (response.data.token) {
+        localStorage.setItem('jwtToken', response.data.token);
       }
-    } catch (error) {
-      setError(error.response?.data?.message || 'Signup failed');
-    } finally {
-      setLoading(false);
+      navigate('/login');
     }
-  };
+  } catch (error) {
+    setError(error.response?.data?.message || 'Signup failed');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const resendOTP = async () => {
+  if (resendTimer > 0) return;
+  setLoading(true);
+  setError('');
+  try {
+    const endpoint = isDoctor
+      ? 'http://localhost:4000/api/doctor/resend-otp'  // Updated endpoi
+      : 'http://localhost:4000/api/user/resend-otp';
+    const response = await axios.post(endpoint, {
+      email: formData.email
+    });
+    if (response.data.success) {
+      alert('OTP resent successfully!');
+      startResendTimer();
+    } else {
+      setError(response.data.message || 'Failed to resend OTP');
+    }
+  } catch (error) {
+    setError(error.response?.data?.message || 'Failed to resend OTP');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
@@ -87,7 +178,7 @@ const Signup = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+         <form onSubmit={otpSent ? handleSubmit : handleSendOTP}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Name
@@ -127,20 +218,57 @@ const Signup = () => {
             />
           </div>
 
-          {/* Only show file input if the user is signing up as a patient */}
-          {(
+          {/* Speciality field for doctors */}
+          {!otpSent && isDoctor && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Speciality
+              </label>
+              <input
+                type="text"
+                value={formData.speciality}
+                onChange={(e) => setFormData({...formData, speciality: e.target.value})}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+              />
+            </div>
+          )}
+
+          {/* Profile Picture for both doctors and patients */}
+          {!otpSent && (
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2">
                 Profile Picture
               </label>
               <input
                 type="file"
+                accept="image/*"
                 onChange={(e) => setImage(e.target.files[0])}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required
               />
             </div>
           )}
+
+           {otpSent && (
+   <div className="mb-4">
+     <label className="block text-gray-700 text-sm font-bold mb-2">
+       Enter OTP (Check your email)
+     </label>
+     <input
+       type="text"
+       value={otp}
+       onChange={(e) => setOtp(e.target.value)}
+       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+       required
+     />
+     <div className="mt-2 text-sm text-blue-600 cursor-pointer" onClick={resendOTP}>
+       {resendTimer > 0 
+         ? `Resend OTP in ${resendTimer}s` 
+         : "Didn't receive OTP? Resend"}
+     </div>
+   </div>
+ )}
 
           <button
             type="submit"

@@ -4,6 +4,10 @@ import upload from '../middlewares/multer.js';
 import jwt from 'jsonwebtoken';
 import doctorModel from '../models/doctorModel.js';
 import User from '../models/userModel.js';
+import nodemailer from 'nodemailer';
+import otpGenerator from 'otp-generator';
+import OTPSchema from '../models/otpModel.js';
+import Doctor from '../models/doctorModel.js';
 
 export const uploadPdf = async (req, res) => {
   try {
@@ -31,7 +35,7 @@ export const uploadPdf = async (req, res) => {
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, otp } = req.body;
     const imageFile = req.file;
 
     if (!name || !email || !password || !imageFile) {
@@ -39,6 +43,17 @@ const signup = async (req, res) => {
         success: false, 
         message: "All fields are required" 
       });
+    }
+
+    // Verify OTP first
+    const otpRecord = await OTPSchema.findOne({ email }).sort({ createdAt: -1 });
+    if (!otpRecord || otpRecord.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+    
+    // Check if OTP is expired (e.g., 10 minutes)
+    if (new Date() - otpRecord.createdAt > 10 * 60 * 1000) {
+      return res.status(400).json({ success: false, message: 'OTP expired' });
     }
 
     // Convert image to base64
@@ -57,6 +72,8 @@ const signup = async (req, res) => {
 
     const newUser = new userModel(userData);
     await newUser.save();
+
+
     const token = jwt.sign(
       {
         id: newUser._id,
@@ -78,6 +95,146 @@ const signup = async (req, res) => {
     });
   }
 };
+
+
+// Configure nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+// Test the connection
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('SMTP configuration error:', error);
+  } else {
+    console.log('Server is ready to take messages');
+  }
+});
+
+export const sendOTP = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    console.log('Attempting to send OTP to:', email);
+    
+    // Check if user exists
+    const userExists = await userModel.findOne({ email }) || await doctorModel.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: 'User already exists' });
+    }
+
+    // Generate OTP
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false
+    });
+
+    // Save OTP
+    await OTPSchema.create({ 
+      email, 
+      otp,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 600000) // 10 minutes
+    });
+
+    // Send email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your OTP for Account Verification',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Hello ${name},</h2>
+          <p>Your OTP for account verification is: <strong>${otp}</strong></p>
+          <p>This OTP is valid for 10 minutes.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('OTP sent successfully to:', email);
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    // Verify OTP first
+    const otpRecord = await OTPSchema.findOne({ email }).sort({ createdAt: -1 });
+    if (!otpRecord || otpRecord.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+    
+    // Check if OTP is expired (e.g., 10 minutes)
+    if (new Date() - otpRecord.createdAt > 10 * 60 * 1000) {
+      return res.status(400).json({ success: false, message: 'OTP expired' });
+    }
+    
+    // If OTP is valid, return success
+    res.json({ success: true, message: 'OTP verified successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to verify OTP' });
+  }
+};
+
+export const resendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Delete any existing OTP for this email
+    await OTPSchema.deleteMany({ email });
+
+    // Generate new OTP
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false
+    });
+
+    // Save new OTP
+    await OTPSchema.create({ email, otp });
+
+    // Send email
+    const mailOptions = {
+      from: 'sunil.22210652@viit.ac.in',
+      to: email,
+      subject: 'Your New OTP for Account Verification',
+      html: `<div>
+        <h3>Hello,</h3>
+        <p>Your new OTP for account verification is: <strong>${otp}</strong></p>
+        <p>This OTP is valid for 10 minutes.</p>
+      </div>`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ success: true, message: 'OTP resent successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to resend OTP' });
+  }
+};
+
+
+
+
 
 const updateUser = async (req, res) => {
   try {
@@ -135,7 +292,7 @@ const updateAddress = async (req, res) => {
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`
+        message: `Missing  fields: ${missingFields.join(', ')}`
       });
     }
 
@@ -377,7 +534,7 @@ export const assignDoctorToPatient = async (req, res) => {
       return res.status(404).json({ success: false, message: "Doctor not found" });
     }
 
-    // Update the patient’s assigned doctor
+    // Update the patient's assigned doctor
     const updatedUser = await userModel.findByIdAndUpdate(
       userId,
       { doctorAssigned: doctorId },
@@ -477,7 +634,7 @@ export const getUserDocument = async (req, res) => {
   }
 };
 
-export { signup, login , getUsers, updateUser,updateAddress,getCurrentUser};
+export { signup, login , getUsers, updateUser, updateAddress, getCurrentUser};
 
 // Add these functions to your existing userController.js file
 
