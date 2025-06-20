@@ -9,7 +9,7 @@ import "jspdf-autotable";
 import { ethers } from "ethers";
 import { contractABI } from "./constants"; // Ensure your contractABI is correctly imported
 import Modal from "react-modal";
-
+import config from '../config/config';
 // Set Modal's root element for accessibility
 Modal.setAppElement("#root");
 
@@ -75,8 +75,8 @@ const MyProfile = () => {
 
         // Choose endpoint based on user type
         const endpoint = isDoctor 
-          ? "http://localhost:4000/api/doctor/me"
-          : "http://localhost:4000/api/user/me";
+          ? `${config.apiUrl}/api/doctor/me`
+          : `${config.apiUrl}/api/user/me`;
 
         const response = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
@@ -276,8 +276,8 @@ const MyProfile = () => {
 
     try {
       const response = await axios.put(
-        "http://localhost:4000/api/user/update",
-        submitData,
+        `${config.apiUrl}/api/user/update,
+        submitData`,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
       if (response.data.success) {
@@ -307,7 +307,7 @@ const MyProfile = () => {
       const pdfFormData = new FormData();
       pdfFormData.append("pdf", pdfFile);
       console.log("handleStorePdf: FormData prepared. Keys:", [...pdfFormData.keys()]);
-      const uploadUrl = "http://localhost:4000/api/user/upload-pdf";
+      const uploadUrl = `${config.apiUrl}/api/user/upload-pdf`;
       console.log("handleStorePdf: Sending PUT request to:", uploadUrl);
       const response = await axios.put(uploadUrl, pdfFormData);
       console.log("handleStorePdf: Received response:", response);

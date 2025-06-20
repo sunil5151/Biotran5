@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import config from '../config/config';
 const GetDoctor = () => {
   const [doctors, setDoctors] = useState([]); // Store all doctor data
   const [searchName, setSearchName] = useState(''); // Store the search query
@@ -13,7 +13,7 @@ const GetDoctor = () => {
   // Fetch all doctors from the API
   const fetchDoctors = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/admin/get-doctors');
+      const response = await axios.get(`${config.apiUrl}/api/admin/get-doctors`);
       setDoctors(response.data.doctors);
     } catch (error) {
       console.error('Error fetching doctors:', error);

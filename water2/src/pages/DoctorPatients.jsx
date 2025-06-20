@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
-
+import config from '../config/config';
 export default function DoctorDropdown() {
   const { user, setUser, token } = useContext(AppContext);
   const [doctors, setDoctors] = useState([]);
@@ -17,7 +17,7 @@ export default function DoctorDropdown() {
         if (!token) {
           throw new Error("No authentication token found");
         }
-        const response = await axios.get("http://localhost:4000/api/doctor/all", {
+        const response = await axios.get(`${config.apiUrl}/api/doctor/all`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -62,7 +62,7 @@ export default function DoctorDropdown() {
       }
 
       const response = await axios.post(
-        "http://localhost:4000/api/doctor/assign",
+        `${config.apiUrl}/api/doctor/assign`,
         {
           patientEmail: user.email,
           doctorId: doctorId,

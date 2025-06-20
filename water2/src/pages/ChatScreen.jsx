@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import { AppContext } from '../context/AppContext';
 import Header from '../components/Header';
 import { ArrowLeft, Paperclip, Download, File } from 'lucide-react';
-
+import config from '../config/config';
 const ChatScreen = () => {
   const { user } = useContext(AppContext);
   const { receiverEmail } = useParams();
@@ -24,7 +24,7 @@ const ChatScreen = () => {
 
   // Connect to socket.io server
   useEffect(() => {
-    socketRef.current = io('http://localhost:4000');
+    socketRef.current = io(config.socketUrl);
     
     // Announce user is online
     if (user?.email) {
@@ -64,7 +64,7 @@ const ChatScreen = () => {
     const fetchChatHistory = async () => {
       try {
         if (user?.email && receiverEmail) {
-          const response = await axios.get('http://localhost:4000/api/messages/history', {
+          const response = await axios.get(`${config.apiUrl}/api/messages/history`, {
             params: {
               sender: user.email,
               receiver: receiverEmail
@@ -178,7 +178,7 @@ const ChatScreen = () => {
     
     try {
       // Send to server
-      await axios.post('http://localhost:4000/api/messages/send', messageData);
+      await axios.post(`${config.apiUrl}/api/messages/send`, messageData);
       
       // Emit to socket
       socketRef.current.emit('send_message', messageData);

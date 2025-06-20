@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-
+import config from '../config/config';
 const AddDoctor = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +31,7 @@ const AddDoctor = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/admin/add-doctor',
+        `${config.apiUrl}/api/admin/add-doctor`,
         formData,
         {
           headers: {

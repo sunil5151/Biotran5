@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import config from '../config/config';
 
 const usePatientData = (patientEmail) => {
   const [patient, setPatient] = useState(null);
@@ -16,7 +17,7 @@ const usePatientData = (patientEmail) => {
       
       // First check if doctor has access
       const accessResponse = await axios.get(
-        `http://localhost:4000/api/doctor/check-patient-access/${patientEmail}`
+        `${config.apiUrl}/api/doctor/check-patient-access/${patientEmail}`
       );
       
       setHasAccess(accessResponse.data.hasAccess);
@@ -24,7 +25,7 @@ const usePatientData = (patientEmail) => {
       if (accessResponse.data.hasAccess) {
         // If has access, fetch full patient data
         const patientResponse = await axios.get(
-          `http://localhost:4000/api/doctor/patient/${patientEmail}`
+          `${config.apiUrl}/api/doctor/patient/${patientEmail}`
         );
         
         if (patientResponse.data.success) {

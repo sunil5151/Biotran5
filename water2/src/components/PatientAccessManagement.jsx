@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-
+import config from '../config/config';
 const PatientAccessManagement = () => {
   const [authorizedDoctors, setAuthorizedDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ const PatientAccessManagement = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get('http://localhost:4000/api/user/authorized-doctors');
+      const response = await axios.get(`${config.apiUrl}/api/user/authorized-doctors`);
       
       if (response.data.success) {
         setAuthorizedDoctors(response.data.authorizedDoctors);
@@ -28,7 +28,7 @@ const PatientAccessManagement = () => {
 
   const handleRevokeAccess = async (doctorEmail) => {
     try {
-      const response = await axios.post('http://localhost:4000/api/user/revoke-doctor-access', { 
+      const response = await axios.post(`${config.apiUrl}/api/user/revoke-doctor-access`, { 
         doctorEmail 
       });
       

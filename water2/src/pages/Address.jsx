@@ -4,7 +4,7 @@ import { Home, MapPin, Building, Flag, Mail, Phone, AlertCircle, FileText, Chevr
 import Sidebar from "../components/Sidebar"
 import { AppContext } from "../context/AppContext"
 import axios from "axios"
-
+import config from '../config/config';
 const inputVariants = {
     focus: { scale: 0.98 },
     blur: { scale: 1 },
@@ -59,7 +59,7 @@ export default function Address() {
       setLoading(true)
       try {
         console.log("Sending data:", formData); // Debug log
-        const response = await axios.put('http://localhost:4000/api/user/update-address', {
+        const response = await axios.put(`${config.apiUrl}/api/user/update-address`, {
           ...formData,
           email: contextUser?.email // Ensure email is sent
         });

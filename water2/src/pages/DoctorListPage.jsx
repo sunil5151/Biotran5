@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import config from '../config/config';
 export default function DoctorListPage() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,7 @@ export default function DoctorListPage() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/doctor/all");
+        const response = await axios.get(`${config.apiUrl}/api/doctor/all`);
         if (response.data && Array.isArray(response.data.doctors)) {
           setDoctors(response.data.doctors);
         }

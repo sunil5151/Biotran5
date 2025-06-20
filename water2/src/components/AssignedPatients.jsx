@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
+import config from '../config/config';
 const AssignedPatients = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ const AssignedPatients = () => {
         }
 
         const response = await axios.get(
-          'http://localhost:4000/api/doctor/patients/assigned',
+          `${config.apiUrl}/api/doctor/patients/assigned`,
           {
             headers: { 
               Authorization: `Bearer ${token}`,

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-
+import config from '../config/config';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/user/me');
+      const response = await axios.get(`${config.apiUrl}/api/user/me`);
       if (response.data.success) {
         setUser(response.data.user);
       }

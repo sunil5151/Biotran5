@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
-
+import config from '../config/config';
 export default function DoctorDropdown() {
   // Get logged-in user info from AppContext
   const { user, setUser } = useContext(AppContext);
@@ -15,7 +15,7 @@ export default function DoctorDropdown() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/doctor/all");
+        const response = await axios.get(`${config.apiUrl}/api/doctor/all`);
         setDoctors(response.data.doctors);
       } catch (error) {
         console.error("Error fetching doctors:", error);
@@ -37,7 +37,7 @@ export default function DoctorDropdown() {
       // Make an API call to assign the doctor for the current user.
       // We send both the doctorId and the user's _id (from context)
       const response = await axios.post(
-        "http://localhost:4000/api/user/assign-doctor",
+        `${config.apiUrl}/api/user/assign-doctor`,
         { doctorId, userId: user._id },
         { withCredentials: true }
       );

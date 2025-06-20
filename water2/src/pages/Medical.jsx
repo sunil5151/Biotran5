@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { Star, AlertCircle, CheckCircle, X } from "lucide-react";
+import config from '../config/config';
 import devi from "./devi.png"; 
 export default function DoctorSelection() {
   const { user, setUser, token } = useContext(AppContext);
@@ -27,7 +28,7 @@ export default function DoctorSelection() {
           autoClose: 3000
         });
         
-        const response = await axios.get("http://localhost:4000/api/doctor/all", {
+        const response = await axios.get(`${config.apiUrl}/api/doctor/all`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -82,7 +83,8 @@ export default function DoctorSelection() {
       }
 
       const response = await axios.post(
-        "http://localhost:4000/api/doctor/assign",
+        `${config.apiUrl}/api/doctor/assign`
+        ,
         { 
           userEmail: user.email,
           doctorEmail: doctorEmail
@@ -128,7 +130,7 @@ export default function DoctorSelection() {
       });
 
       const response = await axios.post(
-        "http://localhost:4000/api/doctor/assign",
+        `${config.apiUrl}/api/doctor/assign`,
         { 
           userEmail: user.email,
           doctorEmail: doctorEmail

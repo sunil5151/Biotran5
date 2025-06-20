@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import config from '../config/config';
 const Signup = () => {
   const navigate = useNavigate();
   const [isDoctor, setIsDoctor] = useState(false); // false = Patient, true = Doctor
@@ -47,8 +47,8 @@ const [resendTimer, setResendTimer] = useState(0);
     try {
       // Select endpoint based on user type
       const endpoint = isDoctor
-        ? 'http://localhost:4000/api/doctor/send-otp'  // Matches backend route
-        : 'http://localhost:4000/api/user/send-otp';
+        ? `${config.apiUrl}/api/doctor/send-otp`  // Matches backend route
+        : `${config.apiUrl}/api/user/send-otp`;
 
       console.log('Using endpoint:', endpoint);
       console.log('Sending data:', {
@@ -102,8 +102,8 @@ const [resendTimer, setResendTimer] = useState(0);
 
   // Choose endpoint based on toggle
   const endpoint = isDoctor 
-    ? 'http://localhost:4000/api/doctor/signup' 
-    : 'http://localhost:4000/api/user/signup';
+    ? `${config.apiUrl}/api/doctor/signup`
+    : `${config.apiUrl}/api/user/signup`;
 
   try {
     const response = await axios.post(endpoint, submitData, {
@@ -131,8 +131,8 @@ const [resendTimer, setResendTimer] = useState(0);
   setError('');
   try {
     const endpoint = isDoctor
-      ? 'http://localhost:4000/api/doctor/resend-otp'  // Updated endpoi
-      : 'http://localhost:4000/api/user/resend-otp';
+      ? `${config.apiUrl}/api/doctor/resend-otp`  // Updated endpoi
+      : `${config.apiUrl}/api/user/resend-otp`;
     const response = await axios.post(endpoint, {
       email: formData.email
     });

@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ReactLoading from "react-loading";
 import { FcGoogle } from "react-icons/fc";
 import { AppContext } from "../context/AppContext";
-
+import config from '../config/config';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AppContext);
@@ -37,8 +37,8 @@ const Login = () => {
     try {
       // Choose endpoint based on the toggle state
       const endpoint = isDoctor 
-        ? 'http://localhost:4000/api/doctor/login'
-        : 'http://localhost:4000/api/user/login';
+        ? `${config.apiUrl}/api/doctor/login`
+        : `${config.apiUrl}/api/user/login`;
 
       const response = await axios.post(endpoint, {
         email: formData.email,

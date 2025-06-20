@@ -5,7 +5,7 @@ import Sidebar from "../components/Sidebar";
 import axios from 'axios';
 import { AppContext } from '../context/AppContext'; 
 import { toast } from 'react-hot-toast';
-
+import config from '../config/config';
 export default function Document() {
   const { user } = useContext(AppContext); 
 
@@ -48,7 +48,7 @@ export default function Document() {
       });
 
       const response = await axios.put(
-        'http://localhost:4000/api/user/update-documents', 
+        `${config.apiUrl}/api/user/update-documents`, 
         formDataToSend, 
         {
           headers: {

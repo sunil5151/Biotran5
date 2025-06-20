@@ -3,6 +3,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import Sidebar from "../components/Sidebar";
 import Skeleton from "react-loading-skeleton";
+import config from '../config/config';
 import { 
   User, 
   Phone, 
@@ -61,7 +62,7 @@ export default function Dashboard() {
 
         if (isDoctor) {
           // Fetch doctor data
-          const response = await axios.get("http://localhost:4000/api/doctor/me", {
+          const response = await axios.get(`${config.apiUrl}/api/doctor/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success && response.data.doctor) {
@@ -72,7 +73,7 @@ export default function Dashboard() {
           }
         } else {
           // Fetch patient data
-          const response = await axios.get("http://localhost:4000/api/user/get-users", {
+          const response = await axios.get(`${config.apiUrl}/api/user/get-users`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const fetchedUsers = response.data.users;
@@ -256,7 +257,7 @@ export default function Dashboard() {
         variants={fadeIn}
       >
         <div className="max-w-7xl mx-auto">
-          {/* Debug Information (visible during development) */}
+          {/* Debug Information (visible during development)
           {process.env.NODE_ENV === 'development' && (
             <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
               <h3 className="font-bold text-yellow-800 mb-2">Debug Information:</h3>
@@ -264,7 +265,7 @@ export default function Dashboard() {
                 {JSON.stringify(debugInfo, null, 2)}
               </pre>
             </div>
-          )}
+          )} */}
           
           <motion.div 
             className="bg-white rounded-xl shadow-xl overflow-hidden"

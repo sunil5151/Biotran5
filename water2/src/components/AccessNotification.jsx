@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AppContext } from '../context/AppContext';
-
+import config from '../config/config';
 const AccessNotification = () => {
   const { user } = useContext(AppContext);
   const [notifications, setNotifications] = useState([]);
@@ -14,7 +14,7 @@ const AccessNotification = () => {
       try {
         setLoading(true);
         // This would be a new endpoint you'd need to create
-        const response = await axios.get('http://localhost:4000/api/doctor/access-notifications');
+        const response = await axios.get(`${config.apiUrl}/api/doctor/access-notifications`);
         
         if (response.data.success) {
           setNotifications(response.data.notifications);
@@ -39,7 +39,7 @@ const AccessNotification = () => {
   const markAsRead = async (notificationId) => {
     try {
       // This would be a new endpoint you'd need to create
-      await axios.post(`http://localhost:4000/api/doctor/mark-notification-read/${notificationId}`);
+      await axios.post(`${config.apiUrl}/api/doctor/mark-notification-read/${notificationId}`);
       
       // Update local state
       setNotifications(notifications.map(notification => 

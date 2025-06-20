@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
-
+import config from '../config/config';
 const DoctorProfile = () => {
   const { email } = useParams();
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-
+import config from '../config/config';
 const ShowData = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,7 @@ const ShowData = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/user/get-users');
+        const response = await axios.get(`${config.apiUrl}/api/user/get-users`);
         setUsers(response.data.users);
       } catch (error) {
         setError('Error fetching users');

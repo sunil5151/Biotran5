@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
-
+import config from '../config/config';
 const Dashboard1 = () => {
   const { user: contextUser, isDoctor } = useContext(AppContext);
   const [patients, setPatients] = useState([]);
@@ -39,7 +39,7 @@ const handleDownloadPdf = async (patientId, patientName) => {
       try {
         const token = localStorage.getItem("jwtToken");
         const response = await axios.get(
-          "http://localhost:4000/api/user/patients/assigned-to-me",
+          `${config.apiUrl}/api/user/patients/assigned-to-me`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

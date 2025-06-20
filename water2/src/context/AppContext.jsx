@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import { doctors as doctorsData } from "../assets/assets";
-
+import config from '../config/config';
 export const AppContext = createContext();
 
 const AppContextProvider = (props) => {
@@ -28,7 +28,7 @@ const AppContextProvider = (props) => {
 
   const fetchUserData = async (storedToken) => {
     try {
-      const response = await axios.get('http://localhost:4000/api/user/me', {
+      const response = await axios.get(`${config.apiUrl}/api/user/me`, {
         headers: {
           Authorization: `Bearer ${storedToken}`
         }

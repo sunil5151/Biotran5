@@ -54,7 +54,7 @@ export default function PatientDashboard() {
     const fetchUserData = async () => {
       try {
         console.log("Fetching user data for email:", currentUserEmail);
-        const response = await axios.get("http://localhost:4000/api/user/get-users");
+        const response = await axios.get(`${config.apiUrl}/api/user/get-users`);
         console.log("API response:", response.data);
         
         const fetchedUsers = response.data.users;

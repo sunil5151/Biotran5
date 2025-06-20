@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
+import config from '../config/config';
 import devi from "./devi.png"; 
 import { 
   Calendar, 
@@ -74,7 +75,7 @@ export default function DoctorDetail() {
     setChecking(true);
     setIsAvailable(null);
     try {
-      const response = await axios.get("http://localhost:4000/api/appointment/check", {
+      const response = await axios.get(`${config.apiUrl}/api/appointment/check`, {
         params: { doctorEmail: email, appointmentDate },
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -122,7 +123,7 @@ export default function DoctorDetail() {
     setBooking(true);
     try {
       const bookResponse = await axios.post(
-        "http://localhost:4000/api/appointment/book",
+        `${config.apiUrl}/api/appointment/book`,
         { doctorEmail: email, appointmentDate, patientEmail: user.email },
         {
           headers: {

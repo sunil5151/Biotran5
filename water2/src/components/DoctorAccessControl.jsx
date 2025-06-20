@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import useDoctorAccess from '../hooks/useDoctorAccess';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-
+import config from '../config/config';
 const DoctorAccessControl = () => {
   const { user } = useContext(AppContext);
   const { doctors, loading, error, fetchDoctors } = useDoctorAccess();
@@ -17,8 +17,8 @@ const DoctorAccessControl = () => {
       }
 
       const endpoint = currentStatus
-        ? 'http://localhost:4000/api/user/revoke-doctor-access'
-        : 'http://localhost:4000/api/user/grant-doctor-access';
+        ? `${config.apiUrl}/api/user/revoke-doctor-access`
+        : `${config.apiUrl}/api/user/grant-doctor-access`;
 
       const response = await axios.post(
         endpoint,

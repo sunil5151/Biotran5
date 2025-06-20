@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -10,12 +9,16 @@ import doctorRouter from './routes/doctorRoute.js';
 import appointmentRouter from './routes/appointmentRoute.js';
 import messageRouter from './routes/messageRoute.js';
 
+// Environment variables for deployment
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+
 const app = express();
 const port = process.env.PORT || 4000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:4000'],
+    origin: [FRONTEND_URL, BACKEND_URL],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -24,7 +27,7 @@ const io = new Server(httpServer, {
 // middlewares
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:4000'], // Add all allowed origins
+  origin: [FRONTEND_URL, BACKEND_URL], // Using environment variables
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

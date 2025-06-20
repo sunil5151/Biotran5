@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { User, Mail, Star, LogIn } from "lucide-react";
 import devi from "./devi.png"; 
+import config from '../config/config';
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +22,7 @@ const Doctors = () => {
       
       try {
         setIsLoading(true);
-        const response = await axios.get('http://localhost:4000/api/doctor/all', {
+        const response = await axios.get(`${config.apiUrl}/api/doctor/all`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
