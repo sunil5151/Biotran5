@@ -18,7 +18,7 @@ const port = process.env.PORT || 4000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: [FRONTEND_URL, BACKEND_URL],
+    origin: "*",
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -27,7 +27,7 @@ const io = new Server(httpServer, {
 // middlewares
 app.use(express.json());
 app.use(cors({
-  origin: [FRONTEND_URL, BACKEND_URL], // Using environment variables
+  origin: "*", // Using environment variables
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
