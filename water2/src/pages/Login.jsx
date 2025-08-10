@@ -1,3 +1,5 @@
+
+
 import { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -7,10 +9,11 @@ import ReactLoading from "react-loading";
 import { FcGoogle } from "react-icons/fc";
 import { AppContext } from "../context/AppContext";
 import config from '../config/config';
-const Login = () => {
+
+const Login = ({ darkMode }) => {
   const navigate = useNavigate();
   const { login } = useContext(AppContext);
-  const [isDoctor, setIsDoctor] = useState(false); // false = Patient, true = Doctor
+  const [isDoctor, setIsDoctor] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,7 +38,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Choose endpoint based on the toggle state
       const endpoint = isDoctor 
         ? `${config.apiUrl}/api/doctor/login`
         : `${config.apiUrl}/api/user/login`;
@@ -46,10 +48,7 @@ const Login = () => {
       });
 
       if (response.data.success && response.data.token) {
-        // Store token
         localStorage.setItem('jwtToken', response.data.token);
-
-        // Set default Authorization header for future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
         if (isDoctor) {
@@ -57,7 +56,6 @@ const Login = () => {
         } else {
           login(response.data.user, response.data.token, false);
         }
-
 
         toast.success('Login successful!');
         navigate('/');
@@ -76,29 +74,52 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
+    <div 
+      className="flex items-center justify-center min-h-screen py-16 px-4"
+      style={{ backgroundColor: 'var(--background-color)', color: 'var(--text-color)' }}
+    >
+      <div 
+        className="shadow-lg rounded-xl p-8 w-full max-w-md transition-colors duration-300"
+        style={{ backgroundColor: 'var(--card-background)' }}
+      >
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Welcome Back
+        </h2>
         
         {/* Toggle buttons for patient and doctor */}
-        <div className="mb-4 flex justify-center">
+        <div 
+          className="mb-6 flex justify-center p-1 rounded-xl shadow-inner"
+          style={{ backgroundColor: 'var(--background-color)' }}
+        >
           <button 
             onClick={() => handleToggle("patient")}
-            className={`px-4 py-2 border ${!isDoctor ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'} rounded-l focus:outline-none`}
+            className={`flex-1 px-4 py-2 text-center rounded-lg font-medium transition-all duration-300 ${!isDoctor 
+              ? 'bg-[var(--primary-color)] text-white shadow' 
+              : 'text-[var(--text-color)] hover:bg-transparent'}`}
+            style={{ 
+              backgroundColor: !isDoctor ? 'var(--primary-color)' : '',
+              color: !isDoctor ? 'white' : 'var(--text-color)'
+            }}
           >
             Patient
           </button>
           <button 
             onClick={() => handleToggle("doctor")}
-            className={`px-4 py-2 border ${isDoctor ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'} rounded-r focus:outline-none`}
+            className={`flex-1 px-4 py-2 text-center rounded-lg font-medium transition-all duration-300 ${isDoctor 
+              ? 'bg-[var(--primary-color)] text-white shadow' 
+              : 'text-[var(--text-color)] hover:bg-transparent'}`}
+            style={{ 
+              backgroundColor: isDoctor ? 'var(--primary-color)' : '',
+              color: isDoctor ? 'white' : 'var(--text-color)'
+            }}
           >
             Doctor
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-gray-600 font-medium mb-1">
+            <label htmlFor="email" className="block font-medium mb-2">
               Email
             </label>
             <input
@@ -107,7 +128,11 @@ const Login = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+              style={{ 
+                borderColor: 'var(--card-border)',
+                backgroundColor: 'var(--background-color)'
+              }}
               placeholder="Enter your email"
               required
               disabled={loading}
@@ -116,7 +141,7 @@ const Login = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-gray-600 font-medium mb-1">
+            <label htmlFor="password" className="block font-medium mb-2">
               Password
             </label>
             <input
@@ -125,7 +150,11 @@ const Login = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+              style={{ 
+                borderColor: 'var(--card-border)',
+                backgroundColor: 'var(--background-color)'
+              }}
               placeholder="Enter your password"
               required
               disabled={loading}
@@ -133,26 +162,31 @@ const Login = () => {
             />
           </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              name="rememberMe"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="mr-2"
-              disabled={loading}
-              aria-label="Remember Me"
-            />
-            <label htmlFor="rememberMe" className="text-gray-600">
-              Remember Me
-            </label>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+                className="mr-2"
+                disabled={loading}
+                aria-label="Remember Me"
+              />
+              <label htmlFor="rememberMe" className="text-gray-500">
+                Remember Me
+              </label>
+            </div>
+            <a href="#" className="text-[var(--primary-color)] hover:underline">
+              Forgot Password?
+            </a>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 ${
+            className={`w-full bg-[var(--primary-color)] text-white py-3 px-4 rounded-lg font-bold hover:bg-[var(--primary-light-color)] transition duration-300 shadow-md ${
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
             aria-label="Login"
@@ -165,16 +199,29 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-sm text-gray-500 text-center mt-4">
+        <p className="text-sm text-center mt-6 text-gray-500">
           Don't have an account?{" "}
-          <a href="/signup" className="text-blue-500 hover:underline">
+          <a href="/signup" className="text-[var(--primary-color)] hover:underline">
             Sign up
           </a>
         </p>
 
-        <div className="mt-4">
+        <div className="mt-8 relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span 
+              className="bg-[var(--card-background)] px-2 text-gray-500"
+            >
+              Or
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6">
           <button
-            className="w-full bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-lg hover:bg-gray-50 transition duration-300 flex items-center justify-center"
+            className="w-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border dark:border-gray-600 py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition duration-300 flex items-center justify-center font-medium shadow-sm"
             onClick={handleGoogleSignIn}
             aria-label="Sign in with Google"
           >

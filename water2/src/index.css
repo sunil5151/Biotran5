@@ -2,16 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: rgb(255, 255, 255); /* White background */
+/* Base styles for the light theme */
+:root {
+  --background-color: #f3f4f6;
+  --text-color: #1f2937;
+  --card-background: #ffffff;
+  --card-border: #e5e7eb;
+  --header-background: #111827; /* Fixed Navbar color */
+  --header-text: #ffffff;
+  --primary-color: #4f46e5;
+  --primary-light-color: #6366f1;
+  --secondary-color: #10b981;
+  --secondary-light-color: #34d399;
+  --accent-color: #ef4444;
+  --accent-light-color: #f87171;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dark\:bg-gray-900 {
-    background-color: rgb(255, 255, 255) !important; /* Override dark mode background to white */
-  }
+/* Styles for the dark theme, applied when data-theme="dark" is set */
+[data-theme='dark'] {
+  --background-color: #1f2937;
+  --text-color: #e5e7eb;
+  --card-background: #374151;
+  --card-border: #4b5563;
+  --header-background: #111827; /* Fixed Navbar color */
+  --header-text: #ffffff;
+  --primary-color: #818cf8;
+  --primary-light-color: #a5b4fc;
+  --secondary-color: #10b981;
+  --secondary-light-color: #34d399;
+  --accent-color: #f87171;
+  --accent-light-color: #fca5a5;
 }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
 /* Add padding to the top of sections to account for the fixed Navbar height */
 section {
   scroll-margin-top: 80px; /* Adjust this value based on your Navbar height */
+}
+
+/* Doctor image custom styles */
+.doctor-image-container {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* Creates a square aspect ratio */
+  background: var(--background-color); /* Matches the general background color */
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  overflow: hidden;
+}
+.doctor-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures the image fills the container without distortion */
+  object-position: top center;
+  transition: all 0.3s;
+  display: block;
+}
+.group:hover .doctor-image {
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .doctor-image-container {
+    padding-top: 75%; /* Adjusts aspect ratio for smaller screens */
+  }
+}
+@media (max-width: 640px) {
+  .doctor-image-container {
+    padding-top: 60%; /* Further adjustment for mobile */
+  }
 }
