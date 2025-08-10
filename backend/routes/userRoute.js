@@ -70,6 +70,8 @@ userRouter.get('/patient/:id/pdf', verifyToken, async (req, res) => {
     res.status(500).json({ success: false, message: "Error fetching PDF", error: error.message });
   }
 });
+
+
 userRouter.put('/update-documents', verifyToken, 
     uploads.fields([
         { name: 'photo', maxCount: 1 },
@@ -79,6 +81,7 @@ userRouter.put('/update-documents', verifyToken,
     ]),
     updateUserDocuments
 );
+
 
 userRouter.get('/document/:documentType', getUserDocument);
 userRouter.post('/grant-doctor-access', verifyToken, async (req, res) => {

@@ -1,23 +1,24 @@
-import userModel from '../models/userModel.js';
-import validator from 'validator';
-import upload from '../middlewares/multer.js';
-import jwt from 'jsonwebtoken';
-import doctorModel from '../models/doctorModel.js';
-import User from '../models/userModel.js';
-import nodemailer from 'nodemailer';
-import otpGenerator from 'otp-generator';
-import OTPSchema from '../models/otpModel.js';
-import Doctor from '../models/doctorModel.js';
+import userModel from "../models/userModel.js";
+import validator from "validator";
+import upload from "../middlewares/multer.js";
+import jwt from "jsonwebtoken";
+import doctorModel from "../models/doctorModel.js";
+import User from "../models/userModel.js";
+import nodemailer from "nodemailer";
+import otpGenerator from "otp-generator";
+import OTPSchema from "../models/otpModel.js";
+import Doctor from "../models/doctorModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 export const uploadPdf = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No PDF file uploaded.' });
+      return res.status(400).json({ error: "No PDF file uploaded." });
     }
-    
+
     // Get the binary data from the file
     const pdfBuffer = req.file.buffer;
-    
+
     // Update the current user's document using the documents.pdf field
     await User.findByIdAndUpdate(req.user.id, {
       "documents.pdf": pdfBuffer,
@@ -25,11 +26,13 @@ export const uploadPdf = async (req, res) => {
       "documents.pdfContentType": req.file.mimetype,
     });
 
-    console.log('PDF stored in MongoDB successfully!');
-    return res.status(200).json({ message: 'PDF stored in MongoDB successfully' });
+    console.log("PDF stored in MongoDB successfully!");
+    return res
+      .status(200)
+      .json({ message: "PDF stored in MongoDB successfully" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Server error.' });
+    return res.status(500).json({ error: "Server error." });
   }
 };
 
@@ -39,25 +42,27 @@ const signup = async (req, res) => {
     const imageFile = req.file;
 
     if (!name || !email || !password || !imageFile) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "All fields are required" 
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
       });
     }
 
     // Verify OTP first
-    const otpRecord = await OTPSchema.findOne({ email }).sort({ createdAt: -1 });
+    const otpRecord = await OTPSchema.findOne({ email }).sort({
+      createdAt: -1,
+    });
     if (!otpRecord || otpRecord.otp !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
-    
+
     // Check if OTP is expired (e.g., 10 minutes)
     if (new Date() - otpRecord.createdAt > 10 * 60 * 1000) {
-      return res.status(400).json({ success: false, message: 'OTP expired' });
+      return res.status(400).json({ success: false, message: "OTP expired" });
     }
 
     // Convert image to base64
-    const base64Image = imageFile.buffer.toString('base64');
+    const base64Image = imageFile.buffer.toString("base64");
     const mimeType = imageFile.mimetype;
 
     const userData = {
@@ -67,137 +72,140 @@ const signup = async (req, res) => {
       image: {
         base64: base64Image,
         mimeType: mimeType,
-      }
+      },
     };
 
     const newUser = new userModel(userData);
     await newUser.save();
 
-
     const token = jwt.sign(
       {
         id: newUser._id,
         name: newUser.name,
-        email: newUser.email
+        email: newUser.email,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: "7d" }
     );
 
     // Return the token along with success message
-    res.json({ success: true, message: 'Signup successful', token });
-
+    res.json({ success: true, message: "Signup successful", token });
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error during signup"
+      message: "Server error during signup",
     });
   }
 };
 
-
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
+  service: "gmail",
+  host: "smtp.gmail.com",
   port: 587,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 // Test the connection
 transporter.verify((error, success) => {
   if (error) {
-    console.error('SMTP configuration error:', error);
+    console.error("SMTP configuration error:", error);
   } else {
-    console.log('Server is ready to take messages');
+    console.log("Server is ready to take messages");
   }
 });
 
 export const sendOTP = async (req, res) => {
   try {
     const { email, name } = req.body;
-    console.log('Attempting to send OTP to:', email);
-    
+    console.log("Attempting to send OTP to:", email);
+
     // Check if user exists
-    const userExists = await userModel.findOne({ email }) || await doctorModel.findOne({ email });
+    const userExists =
+      (await userModel.findOne({ email })) ||
+      (await doctorModel.findOne({ email }));
     if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
     // Generate OTP
     const otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       specialChars: false,
-      lowerCaseAlphabets: false
+      lowerCaseAlphabets: false,
     });
 
     // Save OTP
-    await OTPSchema.create({ 
-      email, 
+    await OTPSchema.create({
+      email,
       otp,
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 600000) // 10 minutes
+      expiresAt: new Date(Date.now() + 600000), // 10 minutes
     });
 
     // Send email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Your OTP for Account Verification',
+      subject: "Your OTP for Account Verification",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <h2>Hello ${name},</h2>
           <p>Your OTP for account verification is: <strong>${otp}</strong></p>
           <p>This OTP is valid for 10 minutes.</p>
         </div>
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('OTP sent successfully to:', email);
+    console.log("OTP sent successfully to:", email);
 
-    res.json({ success: true, message: 'OTP sent successfully' });
+    res.json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
-    console.error('Error sending OTP:', error);
-    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+    console.error("Error sending OTP:", error);
+    res.status(500).json({ success: false, message: "Failed to send OTP" });
   }
 };
 
 export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
+
     // Verify OTP first
-    const otpRecord = await OTPSchema.findOne({ email }).sort({ createdAt: -1 });
+    const otpRecord = await OTPSchema.findOne({ email }).sort({
+      createdAt: -1,
+    });
     if (!otpRecord || otpRecord.otp !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
-    
+
     // Check if OTP is expired (e.g., 10 minutes)
     if (new Date() - otpRecord.createdAt > 10 * 60 * 1000) {
-      return res.status(400).json({ success: false, message: 'OTP expired' });
+      return res.status(400).json({ success: false, message: "OTP expired" });
     }
-    
+
     // If OTP is valid, return success
-    res.json({ success: true, message: 'OTP verified successfully' });
+    res.json({ success: true, message: "OTP verified successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to verify OTP' });
+    res.status(500).json({ success: false, message: "Failed to verify OTP" });
   }
 };
 
 export const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     // Delete any existing OTP for this email
     await OTPSchema.deleteMany({ email });
 
@@ -205,7 +213,7 @@ export const resendOTP = async (req, res) => {
     const otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       specialChars: false,
-      lowerCaseAlphabets: false
+      lowerCaseAlphabets: false,
     });
 
     // Save new OTP
@@ -213,28 +221,24 @@ export const resendOTP = async (req, res) => {
 
     // Send email
     const mailOptions = {
-      from: 'sunil.22210652@viit.ac.in',
+      from: "sunil.22210652@viit.ac.in",
       to: email,
-      subject: 'Your New OTP for Account Verification',
+      subject: "Your New OTP for Account Verification",
       html: `<div>
         <h3>Hello,</h3>
         <p>Your new OTP for account verification is: <strong>${otp}</strong></p>
         <p>This OTP is valid for 10 minutes.</p>
-      </div>`
+      </div>`,
     };
 
     await transporter.sendMail(mailOptions);
 
-    res.json({ success: true, message: 'OTP resent successfully' });
+    res.json({ success: true, message: "OTP resent successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to resend OTP' });
+    res.status(500).json({ success: false, message: "Failed to resend OTP" });
   }
 };
-
-
-
-
 
 const updateUser = async (req, res) => {
   try {
@@ -243,15 +247,15 @@ const updateUser = async (req, res) => {
     console.log("Request body:", req.body);
     if (req.file) {
       console.log("File details:", req.file);
-      if (!req.file.mimetype.startsWith('image/')) {
+      if (!req.file.mimetype.startsWith("image/")) {
         return res.status(400).json({
           success: false,
-          message: "Images Only!"
+          message: "Images Only!",
         });
       }
       updatedData.prescriptionPdf = {
         data: req.file.buffer,
-        contentType: req.file.mimetype
+        contentType: req.file.mimetype,
       };
     }
 
@@ -266,7 +270,7 @@ const updateUser = async (req, res) => {
       console.log("Data trying to match with:", updatedData);
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -276,7 +280,7 @@ const updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error updating user",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -286,13 +290,19 @@ const updateAddress = async (req, res) => {
     const { email, ...addressData } = req.body;
 
     // Validate required fields
-    const requiredFields = ['permanentAddress', 'city', 'country', 'postalCode', 'contactNumber'];
-    const missingFields = requiredFields.filter(field => !addressData[field]);
-    
+    const requiredFields = [
+      "permanentAddress",
+      "city",
+      "country",
+      "postalCode",
+      "contactNumber",
+    ];
+    const missingFields = requiredFields.filter((field) => !addressData[field]);
+
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Missing  fields: ${missingFields.join(', ')}`
+        message: `Missing  fields: ${missingFields.join(", ")}`,
       });
     }
 
@@ -312,8 +322,8 @@ const updateAddress = async (req, res) => {
           alternativeContact: addressData.alternativeContact,
           emergencyContact: addressData.emergencyContact,
           addressType: addressData.addressType,
-          additionalNotes: addressData.additionalNotes
-        }
+          additionalNotes: addressData.additionalNotes,
+        },
       },
       { new: true }
     );
@@ -321,7 +331,7 @@ const updateAddress = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -331,17 +341,16 @@ const updateAddress = async (req, res) => {
       address: {
         permanentAddress: updatedUser.permanentAddress,
         city: updatedUser.city,
-        country: updatedUser.country
+        country: updatedUser.country,
         // ... other address fields as needed
-      }
+      },
     });
-
   } catch (error) {
     console.error("Error updating address:", error);
     res.status(500).json({
       success: false,
       message: "Error updating address",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -350,11 +359,11 @@ const getCurrentUser = async (req, res) => {
   try {
     // Find user by id from token
     const user = await userModel.findById(req.user.id);
-    
+
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
       });
     }
 
@@ -365,7 +374,7 @@ const getCurrentUser = async (req, res) => {
       const pdfBuffer = Buffer.isBuffer(pdfField)
         ? pdfField
         : Buffer.from(pdfField.data || pdfField);
-      pdfBase64 = pdfBuffer.toString('base64');
+      pdfBase64 = pdfBuffer.toString("base64");
     }
 
     // Send single response with all user data
@@ -390,18 +399,17 @@ const getCurrentUser = async (req, res) => {
         city: user.city,
         state: user.state,
         documents: {
-          pdf: pdfBase64
+          pdf: pdfBase64,
         },
-        country: user.country
-      }
+        country: user.country,
+      },
     });
-
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    console.error("Error fetching current user:", error);
     return res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -414,13 +422,17 @@ export const assignDoctor = async (req, res) => {
     // 1. Find the patient by email
     const patient = await userModel.findOne({ email: patientEmail });
     if (!patient) {
-      return res.status(404).json({ success: false, message: "Patient not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Patient not found" });
     }
 
     // 2. Find the doctor by email
     const doctor = await doctorModel.findOne({ email: doctorEmail });
     if (!doctor) {
-      return res.status(404).json({ success: false, message: "Doctor not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
     }
 
     // 3. Update patient's document to store the doctor's email
@@ -436,89 +448,118 @@ export const assignDoctor = async (req, res) => {
     return res.json({
       success: true,
       message: "Doctor assigned successfully",
-      updatedPatient: patient
+      updatedPatient: patient,
     });
   } catch (error) {
     console.error("Error assigning doctor:", error);
     return res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 export const updateUserDocuments = async (req, res) => {
   try {
-      const { email } = req.body;
-      if (!email) {
-          return res.status(400).json({
-              success: false,
-              message: 'Email is required'
-          });
-      }
-
-      const files = req.files;
-      if (!files || Object.keys(files).length === 0) {
-          return res.status(400).json({
-              success: false,
-              message: 'No files were uploaded'
-          });
-      }
-
-      const documentUpdates = {};
-
-      // Process each file
-      for (const [key, file] of Object.entries(files)) {
-          if (file && file[0]) {
-              documentUpdates[`documents.${key}`] = {
-                  data: file[0].buffer,
-                  contentType: file[0].mimetype,
-                  fileName: file[0].originalname
-              };
-          }
-      }
-
-      const updatedUser = await userModel.findOneAndUpdate(
-          { email },
-          { $set: documentUpdates },
-          { new: true }
-      );
-
-      if (!updatedUser) {
-          return res.status(404).json({
-              success: false,
-              message: 'User not found'
-          });
-      }
-
-      res.status(200).json({
-          success: true,
-          message: 'Documents updated successfully'
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
       });
+    }
 
+    const files = req.files;
+
+    if (!files || Object.keys(files).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files were uploaded",
+      });
+    }
+
+    const documentUpdates = {};
+
+    // Process each file
+    // for (const [key, file] of Object.entries(files)) {
+    //     if (file && file[0]) {
+
+    //         documentUpdates[`documents.${key}`] = {
+    //             data: file[0].buffer,
+    //             contentType: file[0].mimetype,
+    //             fileName: file[0].originalname
+    //         };
+    //     }
+    // }
+
+    // New Code ---------------------
+
+    for (const [key, fileArr] of Object.entries(files)) {
+      const file = fileArr[0];
+      if (file) {
+        // Convert buffer to base64 so Cloudinary can handle it
+        const base64File = `data:${file.mimetype};base64,${file.buffer.toString(
+          "base64"
+        )}`;
+
+        // Upload to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(base64File, {
+          folder: "user_documents", 
+          resource_type: "auto", // auto-detect image/pdf
+        });
+
+        // Save Cloudinary URL instead of file buffer
+        documentUpdates[`documents.${key}`] = {
+          url: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          contentType: file.mimetype,
+          fileName: file.originalname,
+        };
+      }
+    }
+
+    // ----------------------------
+
+    const updatedUser = await userModel.findOneAndUpdate(
+      { email },
+      { $set: documentUpdates },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Documents updated successfully",
+    });
   } catch (error) {
-      console.error('Error in updateUserDocuments:', error);
-      res.status(500).json({
-          success: false,
-          message: 'Error updating documents',
-          error: error.message
-      });
+    console.error("Error in updateUserDocuments:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating documents",
+      error: error.message,
+    });
   }
 };
 
 const getUsers = async (req, res) => {
   try {
     const users = await userModel.find({});
-    res.json({ 
-      success: true, 
-      users: users || [] 
+    res.json({
+      success: true,
+      users: users || [],
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Error fetching users",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -531,7 +572,9 @@ export const assignDoctorToPatient = async (req, res) => {
     // Ensure doctor exists
     const doctor = await doctorModel.findById(doctorId);
     if (!doctor) {
-      return res.status(404).json({ success: false, message: "Doctor not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
     }
 
     // Update the patient's assigned doctor
@@ -542,7 +585,9 @@ export const assignDoctorToPatient = async (req, res) => {
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Add patient to the doctor's list if not already present
@@ -551,95 +596,100 @@ export const assignDoctorToPatient = async (req, res) => {
       await doctor.save();
     }
 
-    res.json({ success: true, message: "Doctor assigned successfully", user: updatedUser });
+    res.json({
+      success: true,
+      message: "Doctor assigned successfully",
+      user: updatedUser,
+    });
   } catch (error) {
     console.error("Error assigning doctor:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     if (user.password !== password) {
       return res.status(401).json({
         success: false,
-        message: "Invalid password"
+        message: "Invalid password",
       });
     }
 
-// Generate JWT token
-const token = jwt.sign(
-  {
-    id: user._id,
-    name: user.name,
-    email: user.email
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: '1h' }
-);
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-// Return token, user details, and success message
-res.json({
-  success: true,
-  message: "Login successful",
-  token,
-  user: {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    image: user.image
-  }
-});;
+    // Return token, user details, and success message
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 export const getUserDocument = async (req, res) => {
   try {
-      const userId = req.user.id;
-      const { documentType } = req.params;
+    const userId = req.user.id;
+    const { documentType } = req.params;
 
-      const user = await User.findById(userId);
-      if (!user || !user.documents[documentType]) {
-          return res.status(404).json({
-              success: false,
-              message: 'Document not found'
-          });
-      }
-
-      const document = user.documents[documentType];
-      res.set('Content-Type', document.contentType);
-      res.send(document.data);
-
-  } catch (error) {
-      res.status(500).json({
-          success: false,
-          message: 'Error retrieving document',
-          error: error.message
+    const user = await User.findById(userId);
+    if (!user || !user.documents[documentType]) {
+      return res.status(404).json({
+        success: false,
+        message: "Document not found",
       });
+    }
+
+    const document = user.documents[documentType];
+    res.set("Content-Type", document.contentType);
+    res.send(document.data);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving document",
+      error: error.message,
+    });
   }
 };
 
-export { signup, login , getUsers, updateUser, updateAddress, getCurrentUser};
+export { signup, login, getUsers, updateUser, updateAddress, getCurrentUser };
 
 // Add these functions to your existing userController.js file
 
 // Import the notification controller
-import { createNotification } from './notificationController.js';
+import { createNotification } from "./notificationController.js";
 
 // Update the grantDoctorAccess function
 export const grantDoctorAccess = async (req, res) => {
@@ -650,13 +700,17 @@ export const grantDoctorAccess = async (req, res) => {
     // Find the user
     const user = await User.findOne({ email: userEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Find the doctor
     const doctor = await Doctor.findOne({ email: doctorEmail });
     if (!doctor) {
-      return res.status(404).json({ success: false, message: 'Doctor not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
     }
 
     // Check if doctor is already authorized
@@ -667,7 +721,7 @@ export const grantDoctorAccess = async (req, res) => {
     if (isAlreadyAuthorized) {
       return res.status(400).json({
         success: false,
-        message: 'This doctor already has access to your data',
+        message: "This doctor already has access to your data",
       });
     }
 
@@ -675,23 +729,23 @@ export const grantDoctorAccess = async (req, res) => {
     user.authorizedDoctors.push({
       email: doctorEmail,
       name: doctor.name,
-      grantedDate: new Date()
+      grantedDate: new Date(),
     });
 
     await user.save();
-    
+
     // Create a notification for the doctor
-    await createNotification(doctorEmail, userEmail, user.name, 'grant');
+    await createNotification(doctorEmail, userEmail, user.name, "grant");
 
     return res.status(200).json({
       success: true,
-      message: 'Doctor access granted successfully',
+      message: "Doctor access granted successfully",
     });
   } catch (error) {
-    console.error('Error granting doctor access:', error);
+    console.error("Error granting doctor access:", error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while granting doctor access',
+      message: "An error occurred while granting doctor access",
     });
   }
 };
@@ -705,7 +759,9 @@ export const revokeDoctorAccess = async (req, res) => {
     // Find the user
     const user = await User.findOne({ email: userEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     // Check if doctor was authorized
@@ -719,21 +775,21 @@ export const revokeDoctorAccess = async (req, res) => {
     );
 
     await user.save();
-    
+
     // Create a notification for the doctor if they were previously authorized
     if (wasAuthorized) {
-      await createNotification(doctorEmail, userEmail, user.name, 'revoke');
+      await createNotification(doctorEmail, userEmail, user.name, "revoke");
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Doctor access revoked successfully',
+      message: "Doctor access revoked successfully",
     });
   } catch (error) {
-    console.error('Error revoking doctor access:', error);
+    console.error("Error revoking doctor access:", error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while revoking doctor access',
+      message: "An error occurred while revoking doctor access",
     });
   }
 };
@@ -746,7 +802,9 @@ export const getAuthorizedDoctors = async (req, res) => {
     // Find the user
     const user = await User.findOne({ email: userEmail });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     return res.status(200).json({
@@ -754,10 +812,10 @@ export const getAuthorizedDoctors = async (req, res) => {
       authorizedDoctors: user.authorizedDoctors,
     });
   } catch (error) {
-    console.error('Error fetching authorized doctors:', error);
+    console.error("Error fetching authorized doctors:", error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching authorized doctors',
+      message: "An error occurred while fetching authorized doctors",
     });
   }
 };

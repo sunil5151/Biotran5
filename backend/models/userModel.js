@@ -6,45 +6,52 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true },
   password: { type: String, required: true },
   image: {
-    base64: { type: String, required: true, default: "iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAA5uSURBVHgB7d0JchvHFcbxN+" },
-    mimeType: { type: String, required: true, default: "image/png" }
+    base64: {
+      type: String,
+      required: true,
+      default:
+        "iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAACXBIWXMAABCcAAAQnAEmzTo0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAA5uSURBVHgB7d0JchvHFcbxN+",
+    },
+    mimeType: { type: String, required: true, default: "image/png" },
   },
   documents: {
     photo: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
+      url: String,
+      public_id: String,
+      contentType: String,
+      fileName: String,
     },
     prescription: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
+      url: String,
+      public_id: String,
+      contentType: String,
+      fileName: String,
     },
     medicalReport: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
-    },
-    pdf: {
-      type: Buffer,
-      default: null,
+      url: String,
+      public_id: String,
+      contentType: String,
+      fileName: String,
     },
     insurance: {
-        data: Buffer,
-        contentType: String,
-        fileName: String
-    }
-},
+      url: String,
+      public_id: String,
+      contentType: String,
+      fileName: String,
+    },
+  },
   gender: { type: String, default: "Not Selected" },
   dob: { type: String, default: "Not Selected" },
   phone: { type: String, default: "00000000000" },
   bloodGroup: { type: String, default: "Not Provided" },
   age: { type: Number, default: 0 },
-    authorizedDoctors: [{
-    email: String,
-    name: String,
-    grantedDate: Date
-  }],
+  authorizedDoctors: [
+    {
+      email: String,
+      name: String,
+      grantedDate: Date,
+    },
+  ],
   emergencyContact: { type: String, default: "Not Provided" },
   allergies: { type: String, default: "None" },
   vaccinationHistory: { type: String, default: "None" },
@@ -52,16 +59,16 @@ const userSchema = new mongoose.Schema({
   doctorAssigned: {
     name: {
       type: String,
-      default: null
+      default: null,
     },
     email: {
       type: String,
-      default: null
-    }
+      default: null,
+    },
   },
-  prescriptionPdf: { 
-    data: Buffer, 
-    contentType: String 
+  prescriptionPdf: {
+    data: Buffer,
+    contentType: String,
   },
 
   // New address fields
@@ -75,16 +82,16 @@ const userSchema = new mongoose.Schema({
   landmark: { type: String, default: "Not Provided" },
   alternativeContact: { type: String, default: "Not Provided" },
   addressType: { type: String, default: "Not Selected" },
-  additionalNotes: { type: String, default: "No additional notes" }
+  additionalNotes: { type: String, default: "No additional notes" },
 });
 
 // Add pre-save middleware to initialize authorizedDoctors array
-userSchema.pre('save', function(next) {
+userSchema.pre("save", function (next) {
   if (!this.authorizedDoctors) {
     this.authorizedDoctors = [];
   }
   next();
 });
 
-const userModel = mongoose.models.user || mongoose.model('user', userSchema);
+const userModel = mongoose.models.user || mongoose.model("user", userSchema);
 export default userModel;

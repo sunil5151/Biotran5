@@ -6,6 +6,7 @@ import { AppContext } from "../context/AppContext";
 import { User, Mail, Star, LogIn } from "lucide-react";
 import devi from "./devi.png"; 
 import config from '../config/config';
+
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +75,7 @@ const Doctors = () => {
     );
   }
 
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -81,6 +83,7 @@ const Doctors = () => {
       </div>
     );
   }
+
 
   return (
     <div className="pt-20 pb-12 bg-gray-50 min-h-screen">
@@ -93,6 +96,7 @@ const Doctors = () => {
               onClick={() => handleDoctorClick(doctor.email)}
               className="group bg-white rounded-xl shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1 hover:brightness-95"
             >
+            
               {/* Image Section */}
               <div className="relative bg-blue-100 h-[200px] rounded-t-xl flex items-center justify-center overflow-hidden">
                 <img

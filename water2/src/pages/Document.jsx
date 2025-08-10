@@ -97,27 +97,72 @@ export default function Document() {
 }
 
 function FileUpload({ label, name, icon, onChange }) {
+  const fileInputRef = React.useRef(null);
+  const [selectedFileName, setSelectedFileName] = React.useState("");
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFileName(file.name);
+    } else {
+      setSelectedFileName("");
+    }
+    onChange(e);
+  };
+
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="relative flex items-center gap-2 border rounded-md p-3">
-        {icon}
-        <input
-          type="file"
-          name={name}
-          accept="image/*,.pdf,.doc,.docx"
-          onChange={onChange}
-          className="w-full text-gray-700 file:border-none file:bg-gray-100 file:px-3 file:py-1 file:rounded-md"
-        />
+    <div className="mb-6">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+
+      <div
+        className="flex items-center justify-between border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
+        onClick={handleButtonClick}
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+            {icon}
+          </div>
+          <div className="flex flex-col">
+            {selectedFileName ? (
+              <span className="text-gray-800 font-medium">
+                {selectedFileName}
+              </span>
+            ) : (
+              <span className="text-gray-500 text-sm">
+                Click to select a file
+              </span>
+            )}
+            <span className="text-xs text-gray-400">
+              Accepted: JPG, PNG, PDF, DOC, DOCX
+            </span>
+          </div>
+        </div>
+
         <motion.button
           type="button"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center gap-1 hover:bg-indigo-700"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-1 hover:bg-indigo-700"
         >
           <UploadCloud size={16} /> Upload
         </motion.button>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        name={name}
+        accept="image/*,.pdf,.doc,.docx"
+        onChange={handleFileChange}
+        className="hidden"
+      />
     </div>
   );
 }
